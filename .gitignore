@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+embeddings.pt
+sortline.db
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.DS_Store
+
+# Data & Image Directories
+temp_jobs/
+exports/
+sample_images/
+Mosop_images/
+clustered_images/
+mosop_bg_removed/
+mosop_clusters/
+mosop_final_products/
+
+# OS Files
+.DS_Store
