@@ -75,5 +75,7 @@ def cluster_images(embeddings_file, output_dir, threshold=0.15, duplicate_thresh
             shutil.copy2(src, dst)
 
 if __name__ == "__main__":
-    cluster_images('embeddings.pt', 'mosop_clusters', threshold=0.15, duplicate_threshold=0.01)
+    import os
+    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+    cluster_images('embeddings.pt', os.path.join(BASE_DIR, 'data', 'mosop_clusters'), threshold=0.15, duplicate_threshold=0.01)
     print("Done. Check the 'mosop_clusters' folder.")

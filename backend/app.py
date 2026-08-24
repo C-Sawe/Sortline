@@ -31,8 +31,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-TEMP_DIR = "temp_jobs"
-EXPORT_DIR = "exports"
+import os
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+TEMP_DIR = os.path.join(BASE_DIR, "data", "temp_jobs")
+EXPORT_DIR = os.path.join(BASE_DIR, "data", "exports")
 
 os.makedirs(TEMP_DIR, exist_ok=True)
 os.makedirs(EXPORT_DIR, exist_ok=True)

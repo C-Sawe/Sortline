@@ -11,14 +11,7 @@ frontend/dist/
 frontend/.DS_Store
 
 # Data & Image Directories
-temp_jobs/
-exports/
-sample_images/
-Mosop_images/
-clustered_images/
-mosop_bg_removed/
-mosop_clusters/
-mosop_final_products/
+data/
 
 # OS Files
 .DS_Store

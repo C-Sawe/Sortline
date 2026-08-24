@@ -70,7 +70,9 @@ def process_clusters(input_dir, output_dir):
                     print(f"  Error processing {img}: {e}")
 
 if __name__ == "__main__":
-    input_directory = "mosop_clusters"
-    output_directory = "mosop_final_products"
+    import os
+    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+    input_directory = os.path.join(BASE_DIR, "data", "mosop_clusters")
+    output_directory = os.path.join(BASE_DIR, "data", "mosop_final_products")
     process_clusters(input_directory, output_directory)
     print("Done. Check the 'mosop_final_products' folder.")

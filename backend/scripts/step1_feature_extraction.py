@@ -52,12 +52,14 @@ def get_image_embeddings(image_dir):
     return embeddings
 
 if __name__ == "__main__":
-    image_directory = "mosop_images"
+    import os
+    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+    image_directory = os.path.join(BASE_DIR, "data", "Mosop_Products")
     if not os.path.exists(image_directory):
         print(f"Error: {image_directory} not found. Please run download_samples.py first.")
     else:
         embeddings = get_image_embeddings(image_directory)
         
-        # Save embeddings for Step 2
+        # Save embeddings
         torch.save(embeddings, 'embeddings.pt')
-        print(f"Successfully extracted embeddings for {len(embeddings)} images and saved to embeddings.pt.")
+        print(f"Saved {len(embeddings)} embeddings to embeddings.pt.")

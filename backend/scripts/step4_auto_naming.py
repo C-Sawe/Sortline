@@ -74,7 +74,9 @@ def rename_images(input_dir, output_dir):
                 print(f"Renamed: {group_folder}/{img} -> {new_filename}")
 
 if __name__ == "__main__":
-    input_directory = "mosop_bg_removed"
-    output_directory = "mosop_final_products"
+    import os
+    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+    input_directory = os.path.join(BASE_DIR, "data", "mosop_bg_removed")
+    output_directory = os.path.join(BASE_DIR, "data", "mosop_final_products")
     rename_images(input_directory, output_directory)
     print("Done. Check the 'mosop_final_products' folder.")

@@ -36,7 +36,9 @@ def remove_backgrounds(input_dir, output_dir):
                         print(f"Error processing {filename}: {e}")
 
 if __name__ == "__main__":
-    input_directory = "mosop_clusters"
-    output_directory = "mosop_bg_removed"
+    import os
+    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+    input_directory = os.path.join(BASE_DIR, "data", "mosop_clusters")
+    output_directory = os.path.join(BASE_DIR, "data", "mosop_bg_removed")
     remove_backgrounds(input_directory, output_directory)
     print("Done. Check the 'mosop_bg_removed' folder.")
