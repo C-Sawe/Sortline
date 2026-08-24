@@ -5,56 +5,49 @@ import numpy as np
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.metrics.pairwise import cosine_distances
 
-def cluster_images(embeddings_file, output_dir, threshold=0.15, duplicate_threshold=0.01):
+def cluster_images(embeddings_file, input_dir, output_dir, threshold=0.15, duplicate_threshold=0.01):
     if not os.path.exists(embeddings_file):
         print(f"Error: {embeddings_file} not found.")
         return
 
+    print("Loading embeddings...")
     embeddings_dict = torch.load(embeddings_file, weights_only=False)
     
+    # 1. Duplicate Removal
     filenames = list(embeddings_dict.keys())
-    # Convert list of 1D arrays into a 2D numpy array
-    embedding_matrix = np.array([embeddings_dict[f] for f in filenames])
-
-    print(f"Loaded {len(filenames)} embeddings. Checking for duplicates...")
+    if not filenames:
+        return
     
-    # Calculate cosine distance matrix (1 - cosine similarity)
-    distances = cosine_distances(embedding_matrix)
+    embeddings = np.array([embeddings_dict[f] for f in filenames])
     
-    # Identify duplicates (distance < duplicate_threshold)
-    to_keep_indices = []
-    duplicates_found = 0
+    # Compute pairwise cosine distances
+    dist_matrix = cosine_distances(embeddings)
     
+    duplicates_to_remove = set()
     for i in range(len(filenames)):
-        is_duplicate = False
-        # Check if this image is a duplicate of any image we've already decided to keep
-        for kept_idx in to_keep_indices:
-            if distances[i, kept_idx] < duplicate_threshold:
-                is_duplicate = True
-                duplicates_found += 1
-                print(f"Removed exact duplicate: {filenames[i]} (duplicate of {filenames[kept_idx]})")
-                break
-        
-        if not is_duplicate:
-            to_keep_indices.append(i)
-            
-    print(f"Removed {duplicates_found} duplicates. Clustering {len(to_keep_indices)} unique images...")
-
-    # Filter filenames and distance matrix for unique images
-    unique_filenames = [filenames[i] for i in to_keep_indices]
-    unique_distances = distances[np.ix_(to_keep_indices, to_keep_indices)]
+        if i in duplicates_to_remove:
+            continue
+        for j in range(i + 1, len(filenames)):
+            if dist_matrix[i, j] < duplicate_threshold:
+                duplicates_to_remove.add(j)
+                print(f"Removed exact duplicate: {filenames[j]} (duplicate of {filenames[i]})")
+                
+    unique_indices = [i for i in range(len(filenames)) if i not in duplicates_to_remove]
+    unique_filenames = [filenames[i] for i in unique_indices]
+    unique_embeddings = embeddings[unique_indices]
     
-    # Use Agglomerative Clustering
+    print(f"Removed {len(duplicates_to_remove)} duplicates. Clustering {len(unique_filenames)} unique images...")
+    
+    # 2. Agglomerative Clustering
+    unique_dist_matrix = cosine_distances(unique_embeddings)
     clustering = AgglomerativeClustering(
         n_clusters=None, 
-        metric='precomputed',
-        linkage='average',
+        metric='precomputed', 
+        linkage='average', 
         distance_threshold=threshold
     )
+    labels = clustering.fit_predict(unique_dist_matrix)
     
-    labels = clustering.fit_predict(unique_distances)
-    
-    # Create output directories and copy files
     if os.path.exists(output_dir):
         shutil.rmtree(output_dir)
     os.makedirs(output_dir, exist_ok=True)
@@ -70,12 +63,14 @@ def cluster_images(embeddings_file, output_dir, threshold=0.15, duplicate_thresh
         os.makedirs(cluster_folder, exist_ok=True)
         
         for f in files:
-            src = os.path.join("mosop_images", f)
+            src = os.path.join(input_dir, f)
             dst = os.path.join(cluster_folder, f)
             shutil.copy2(src, dst)
 
 if __name__ == "__main__":
     import os
     BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-    cluster_images('embeddings.pt', os.path.join(BASE_DIR, 'data', 'mosop_clusters'), threshold=0.15, duplicate_threshold=0.01)
+    input_dir = os.path.join(BASE_DIR, 'data', 'Mosop_Products')
+    output_dir = os.path.join(BASE_DIR, 'data', 'mosop_clusters')
+    cluster_images('embeddings.pt', input_dir, output_dir, threshold=0.15, duplicate_threshold=0.01)
     print("Done. Check the 'mosop_clusters' folder.")
