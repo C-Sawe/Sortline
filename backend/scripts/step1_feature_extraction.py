@@ -33,10 +33,15 @@ def get_image_embeddings(image_dir):
                 input_tensor = preprocess(input_image)
                 input_batch = input_tensor.unsqueeze(0) # create a mini-batch as expected by the model
 
-                # Move the input and model to GPU for speed if available
+                # Move the input and model to GPU/MPS for speed if available
+                device = 'cpu'
                 if torch.cuda.is_available():
-                    input_batch = input_batch.to('cuda')
-                    model.to('cuda')
+                    device = 'cuda'
+                elif torch.backends.mps.is_available():
+                    device = 'mps'
+
+                input_batch = input_batch.to(device)
+                model.to(device)
 
                 with torch.no_grad():
                     output = model(input_batch)
@@ -53,13 +58,21 @@ def get_image_embeddings(image_dir):
 
 if __name__ == "__main__":
     import os
+    import argparse
+
     BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-    image_directory = os.path.join(BASE_DIR, "data", "Mosop_Products")
-    if not os.path.exists(image_directory):
-        print(f"Error: {image_directory} not found. Please run download_samples.py first.")
+    default_input = os.path.join(BASE_DIR, "data", "Mosop_Products")
+    default_output = os.path.join(BASE_DIR, "embeddings.pt")
+
+    parser = argparse.ArgumentParser(description="Extract ResNet50 embeddings from images.")
+    parser.add_argument("--input-dir", type=str, default=default_input, help="Path to images directory")
+    parser.add_argument("--output", type=str, default=default_output, help="Path to output .pt file")
+    args = parser.parse_args()
+
+    if not os.path.exists(args.input_dir):
+        print(f"Error: {args.input_dir} not found.")
     else:
-        embeddings = get_image_embeddings(image_directory)
-        
-        # Save embeddings
-        torch.save(embeddings, 'embeddings.pt')
-        print(f"Saved {len(embeddings)} embeddings to embeddings.pt.")
+        embeddings = get_image_embeddings(args.input_dir)
+        os.makedirs(os.path.dirname(os.path.abspath(args.output)), exist_ok=True)
+        torch.save(embeddings, args.output)
+        print(f"Saved {len(embeddings)} embeddings to {args.output}.")

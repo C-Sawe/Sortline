@@ -4,21 +4,24 @@ import shutil
 from PIL import Image
 from rembg import remove
 
-def process_clusters(input_dir, output_dir):
+import torch
+
+def process_clusters(input_dir, output_dir, clean=False):
     if not os.path.exists(input_dir):
         print(f"Error: {input_dir} not found.")
         return
 
-    if os.path.exists(output_dir):
+    if clean and os.path.exists(output_dir):
         shutil.rmtree(output_dir)
     os.makedirs(output_dir, exist_ok=True)
     
     print("Loading OCR Model...")
-    reader = easyocr.Reader(['en'], gpu=True)
+    gpu_available = torch.cuda.is_available() or torch.backends.mps.is_available()
+    reader = easyocr.Reader(['en'], gpu=gpu_available)
     
     print(f"Processing clusters from {input_dir}...")
     
-    for group_folder in os.listdir(input_dir):
+    for group_folder in sorted(os.listdir(input_dir)):
         group_path = os.path.join(input_dir, group_folder)
         
         if os.path.isdir(group_path):
@@ -54,7 +57,7 @@ def process_clusters(input_dir, output_dir):
                 new_filename = f"{group_name}_{idx+1}.png"
                 output_path = os.path.join(output_dir, new_filename)
                 
-                # Handle duplicate names if we end up with multiple 'unidentified' groups
+                # Handle duplicate names if we end up with multiple 'unidentified' groups or existing files
                 counter = 1
                 while os.path.exists(output_path):
                     new_filename = f"{group_name}_{idx+1}_{counter}.png"
@@ -71,8 +74,17 @@ def process_clusters(input_dir, output_dir):
 
 if __name__ == "__main__":
     import os
+    import argparse
+
     BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-    input_directory = os.path.join(BASE_DIR, "data", "mosop_clusters")
-    output_directory = os.path.join(BASE_DIR, "data", "mosop_final_products")
-    process_clusters(input_directory, output_directory)
-    print("Done. Check the 'mosop_final_products' folder.")
+    default_input = os.path.join(BASE_DIR, "data", "mosop_clusters")
+    default_output = os.path.join(BASE_DIR, "data", "mosop_final_products")
+
+    parser = argparse.ArgumentParser(description="OCR name identification and background removal on clustered images.")
+    parser.add_argument("--input-dir", type=str, default=default_input, help="Path to clusters directory")
+    parser.add_argument("--output-dir", type=str, default=default_output, help="Path to final products output directory")
+    parser.add_argument("--clean", action="store_true", help="Remove existing output directory before processing")
+    args = parser.parse_args()
+
+    process_clusters(args.input_dir, args.output_dir, clean=args.clean)
+    print(f"Done. Check the '{args.output_dir}' folder.")
