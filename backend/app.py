@@ -45,6 +45,14 @@ job_events = {}
 class ExportRequest(BaseModel):
     groups: list
 
+def safe_join(base_dir: str, *parts: str) -> str | None:
+    """Join path components under base_dir, rejecting any escape (e.g. via '..')."""
+    base_dir = os.path.abspath(base_dir)
+    candidate = os.path.abspath(os.path.join(base_dir, *parts))
+    if os.path.commonpath([base_dir, candidate]) != base_dir:
+        return None
+    return candidate
+
 @app.post("/api/process")
 async def process_images(background_tasks: BackgroundTasks, files: List[UploadFile] = File(...)):
     job_id = str(uuid.uuid4())
@@ -157,8 +165,8 @@ async def event_stream(job_id: str):
 
 @app.get("/images/{job_id}/{filename}")
 async def get_image(job_id: str, filename: str):
-    file_path = os.path.join(TEMP_DIR, job_id, filename)
-    if os.path.exists(file_path):
+    file_path = safe_join(TEMP_DIR, job_id, filename)
+    if file_path and os.path.exists(file_path):
         return FileResponse(file_path)
     return {"error": "File not found"}
 
@@ -175,9 +183,9 @@ async def export_zip(req: ExportRequest):
             for idx, img in enumerate(group['images']):
                 use_bg = img.get('use_bg_removed', False)
                 filename = img['bg_removed'] if use_bg else img['original']
-                source_path = os.path.join(TEMP_DIR, job_id, filename)
-                
-                if os.path.exists(source_path):
+                source_path = safe_join(TEMP_DIR, job_id, filename)
+
+                if source_path and os.path.exists(source_path):
                     ext = os.path.splitext(filename)[1]
                     zipf.write(source_path, arcname=f"{group_name}_{idx+1}{ext}")
                     
@@ -185,7 +193,9 @@ async def export_zip(req: ExportRequest):
 
 @app.get("/api/download/{filename}")
 async def download_export(filename: str):
-    file_path = os.path.join(EXPORT_DIR, filename)
+    file_path = safe_join(EXPORT_DIR, filename)
+    if not file_path or not os.path.exists(file_path):
+        return {"error": "File not found"}
     return FileResponse(file_path, media_type='application/zip', filename=filename)
 
 if __name__ == "__main__":

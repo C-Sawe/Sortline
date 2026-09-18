@@ -40,14 +40,14 @@ def run_batch(input_folder_name, merge_to_master=True):
     print("=" * 60)
 
     # 1. Feature Extraction
-    print("\n>>> STEP 1: Feature Extraction (ResNet50)")
+    print("\n>>> STEP 1: Feature Extraction (CLIP)")
     embeddings = get_image_embeddings(input_dir)
     torch.save(embeddings, embeddings_file)
     print(f"Extracted and saved {len(embeddings)} embeddings to {embeddings_file}")
 
     # 2. Clustering & Duplicate Detection
     print("\n>>> STEP 2: Clustering & Duplicate Removal")
-    cluster_images(embeddings_file, input_dir, clusters_dir, threshold=0.15, duplicate_threshold=0.01)
+    cluster_images(embeddings_file, input_dir, clusters_dir, min_cluster_size=2, duplicate_hash_threshold=10)
 
     # 3. OCR Naming & Rembg Background Removal
     print("\n>>> STEP 3: OCR Naming & AI Background Removal")

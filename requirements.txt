@@ -1,0 +1,14 @@
+fastapi==0.139.0
+uvicorn==0.51.0
+python-multipart==0.0.32
+SQLAlchemy==2.0.51
+aiosqlite==0.22.1
+torch==2.13.0
+transformers==5.13.0
+scikit-learn==1.9.0
+numpy==2.4.6
+pillow==12.3.0
+easyocr==1.7.2
+rembg==2.0.76
+onnxruntime==1.27.0
+ImageHash==4.3.2
